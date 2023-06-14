@@ -6,6 +6,7 @@ class RodauthApp < Rodauth::Rails::App
   # configure RodauthAdmin, :admin
 
   route do |r|
+    rodauth.load_memory
     r.rodauth # route rodauth requests
 
     # ==> Authenticating requests

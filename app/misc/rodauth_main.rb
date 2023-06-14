@@ -18,7 +18,7 @@ class RodauthMain < Rodauth::Rails::Auth
     jwt_secret '<YOUR_SECRET_KEY>'
 
     verify_account_email_link do
-      "https://frontend.example.com/account/verify?token=#{token_param_value(verify_account_key_value)}"
+      "http://localhost:4000/auth/verify-account?key=#{token_param_value(verify_account_key_value)}&email=#{account[:email]}"
     end
 
     remember_cookie_options do
