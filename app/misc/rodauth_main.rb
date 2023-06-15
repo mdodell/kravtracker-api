@@ -1,6 +1,12 @@
 require 'sequel/core'
 
 class RodauthMain < Rodauth::Rails::Auth
+  def merge_account
+    account = Account.find(@account[:id])
+
+    json_response.merge!(account: account.to_builder.attributes!)
+  end
+
   configure do
     # List of authentication features that are loaded.
     enable :create_account, :verify_account, :verify_account_grace_period,
@@ -47,13 +53,40 @@ class RodauthMain < Rodauth::Rails::Auth
     prefix '/auth'
     create_account_route 'register'
 
+    after_create_account do
+      remember_login if param_or_nil('remember')
+      merge_account
+    end
+
+    after_login do
+      remember_login if param_or_nil('remember')
+      merge_account
+    end
+
+    after_remember do
+      merge_account
+    end
+
+    after_logout do
+      # TODO: See if this works?
+      disable_remember_login
+    end
+
     # Specify the controller used for view rendering, CSRF, and callbacks.
     rails_controller { RodauthController }
 
     # Set in Rodauth controller instance with the title of the current page.
     title_instance_variable :@page_title
-    passwords_do_not_match_message 'Passwords do not match, yikes'
-    password_confirm_param 'confirm'
+    password_confirm_param 'passwordConfirmation'
+    verify_account_resend_error_flash 'Unable to resend verify account email.'
+    json_response_field_error_key 'fieldError'
+    jwt_access_token_key 'accessToken'
+    jwt_refresh_token_key 'refreshToken'
+    # Error Enums
+    passwords_do_not_match_message 'PASSWORDS_DO_NOT_MATCH'
+    no_matching_login_message 'NO_MATCHING_LOGIN'
+    invalid_password_message 'INVALID_PASSWORD'
+    unverified_account_message 'UNVERIFIED_ACCOUNT'
 
     # Store account status in an integer column without foreign key constraint.
     account_status_column :status
@@ -138,10 +171,6 @@ class RodauthMain < Rodauth::Rails::Auth
     #     false
     #   end
     # end
-
-    # ==> Remember Feature
-    # Remember all logged in users.
-    after_login { remember_login }
 
     # Or only remember users that have ticked a "Remember Me" checkbox on login.
     # after_login { remember_login if param_or_nil("remember") }
