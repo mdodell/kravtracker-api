@@ -51,3 +51,7 @@ end
 gem "rodauth-rails", "~> 1.9"
 
 gem "jwt", "~> 2.7"
+
+gem "oj", "~> 3.15"
+
+gem "multi_json", "~> 1.15"
