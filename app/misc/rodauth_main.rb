@@ -12,7 +12,7 @@ class RodauthMain < Rodauth::Rails::Auth
     enable :create_account, :verify_account, :verify_account_grace_period,
            :login, :logout, :remember, :json,
            :reset_password, :change_password, :change_password_notify,
-           :change_login, :verify_login_change, :close_account, :jwt, :jwt_refresh
+           :change_login, :verify_login_change, :close_account, :jwt
 
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
@@ -53,9 +53,21 @@ class RodauthMain < Rodauth::Rails::Auth
     prefix '/auth'
     create_account_route 'register'
 
+    before_create_account do
+      throw_error_status(422, 'firstName', 'must be present') if param('firstName').empty?
+      throw_error_status(422, 'lastName', 'must be present') if param('lastName').empty?
+    end
+
     after_create_account do
       remember_login if param_or_nil('remember')
+      Profile.create!(account_id:, first_name: param('firstName'), last_name: param('lastName'))
       merge_account
+    end
+
+    set_jwt_token do |token|
+      next if request.path == reset_password_request_path
+
+      super(token)
     end
 
     after_login do
@@ -80,8 +92,6 @@ class RodauthMain < Rodauth::Rails::Auth
     password_confirm_param 'passwordConfirmation'
     verify_account_resend_error_flash 'Unable to resend verify account email.'
     json_response_field_error_key 'fieldError'
-    jwt_access_token_key 'accessToken'
-    jwt_refresh_token_key 'refreshToken'
     # Error Enums
     passwords_do_not_match_message 'PASSWORDS_DO_NOT_MATCH'
     no_matching_login_message 'NO_MATCHING_LOGIN'
@@ -181,18 +191,13 @@ class RodauthMain < Rodauth::Rails::Auth
     # ==> Hooks
     # Validate custom fields in the create account form.
     # before_create_account do
-    #   throw_error_status(422, "name", "must be present") if param("name").empty?
-    # end
-
-    # Perform additional actions after the account is created.
-    # after_create_account do
-    #   Profile.create!(account_id: account_id, name: param("name"))
+    # throw_error_status(422, "name", "must be present") if param("name").empty?
     # end
 
     # Do additional cleanup after the account is closed.
-    # after_close_account do
-    #   Profile.find_by!(account_id: account_id).destroy
-    # end
+    after_close_account do
+      Profile.find_by!(account_id:).destroy
+    end
 
     # ==> Deadlines
     # Change default deadlines for some actions.

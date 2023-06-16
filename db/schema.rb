@@ -10,18 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_06_14_201547) do
+ActiveRecord::Schema[7.0].define(version: 2023_06_15_215415) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "plpgsql"
-
-  create_table "account_jwt_refresh_keys", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.string "key", null: false
-    t.datetime "deadline", null: false
-    t.index ["account_id"], name: "account_jwt_rk_account_id_idx"
-    t.index ["account_id"], name: "index_account_jwt_refresh_keys_on_account_id"
-  end
 
   create_table "account_password_reset_keys", force: :cascade do |t|
     t.string "key", null: false
@@ -47,8 +39,17 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_14_201547) do
     t.index ["email"], name: "index_accounts_on_email", unique: true, where: "(status = ANY (ARRAY[1, 2]))"
   end
 
-  add_foreign_key "account_jwt_refresh_keys", "accounts"
+  create_table "profiles", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "first_name"
+    t.string "last_name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_profiles_on_account_id"
+  end
+
   add_foreign_key "account_password_reset_keys", "accounts", column: "id"
   add_foreign_key "account_remember_keys", "accounts", column: "id"
   add_foreign_key "account_verification_keys", "accounts", column: "id"
+  add_foreign_key "profiles", "accounts"
 end
