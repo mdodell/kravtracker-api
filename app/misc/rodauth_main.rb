@@ -23,6 +23,9 @@ class RodauthMain < Rodauth::Rails::Auth
 
     jwt_secret '<YOUR_SECRET_KEY>'
 
+    reset_password_email_link do
+      "http://localhost:4000/auth/reset-password?key=#{token_param_value(reset_password_key_value)}"
+    end
     verify_account_email_link do
       "http://localhost:4000/auth/verify-account?key=#{token_param_value(verify_account_key_value)}&email=#{account[:email]}"
     end
@@ -64,6 +67,10 @@ class RodauthMain < Rodauth::Rails::Auth
       merge_account
     end
 
+    after_reset_password do
+      merge_account
+    end
+
     set_jwt_token do |token|
       next if request.path == reset_password_request_path
 
@@ -90,7 +97,8 @@ class RodauthMain < Rodauth::Rails::Auth
     # Set in Rodauth controller instance with the title of the current page.
     title_instance_variable :@page_title
     password_confirm_param 'passwordConfirmation'
-    verify_account_resend_error_flash 'Unable to resend verify account email.'
+    verify_account_resend_error_flash 'Unable to resend verify account email'
+
     json_response_field_error_key 'fieldError'
     # Error Enums
     passwords_do_not_match_message 'PASSWORDS_DO_NOT_MATCH'
@@ -116,7 +124,7 @@ class RodauthMain < Rodauth::Rails::Auth
     # two_factor_auth_return_to_requested_location? true # if using MFA
 
     # Autologin the user after they have reset their password.
-    # reset_password_autologin? true
+    reset_password_autologin? true
 
     # Delete the account record when the user has closed their account.
     # delete_account_on_close? true
