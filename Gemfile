@@ -55,3 +55,5 @@ gem "jwt", "~> 2.7"
 gem "oj", "~> 3.15"
 
 gem "multi_json", "~> 1.15"
+
+gem "figaro", "~> 1.2"
